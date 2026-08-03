@@ -16,6 +16,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from molmass import Formula
 from all_species import all_species
+from collections import defaultdict
 
 
 def _is_single_isotope(formula_str: str) -> bool:
@@ -363,8 +364,8 @@ with st.sidebar:
     st.header("Mass Spectra Tools")
     st.session_state.active_tool = st.radio(
         "Select a tool",
-        ["Isotope Plotter", "m/z Lookup"],
-        index=["Isotope Plotter", "m/z Lookup"].index(st.session_state.active_tool),
+        ["Isotope Plotter", "m/z Lookup", "Oxide Converter"],
+        index=["Isotope Plotter", "m/z Lookup", "Oxide Converter"].index(st.session_state.active_tool),
         key="active_tool_radio",
     )
     st.divider()
@@ -462,7 +463,70 @@ with st.sidebar:
 
         #END NEW CODE 2
     
+    if st.session_state.active_tool == "Oxide Converter":
 
+        st.header("Oxide → Element Converter")
+
+        uploaded_file = st.file_uploader(
+            "Upload oxide standard CSV",
+            type=["csv"],
+            key="oxide_converter_upload",
+        )
+
+        if uploaded_file is not None:
+
+            try:
+                df = pd.read_csv(uploaded_file)
+
+                st.subheader("Input")
+                st.dataframe(df, width="stretch")
+
+                # Remove empty rows
+                df = df.dropna(subset=[df.columns[0], df.columns[1]])
+
+                elemental_totals = defaultdict(float)
+
+                for _, row in df.iterrows():
+
+                    formula_str = str(row.iloc[0]).strip()
+                    wt_pct = float(row.iloc[1])
+
+                    formula = Formula(formula_str)
+
+                    total_mass = formula.mass
+
+                    for element, item in formula.composition().items():
+
+                        elemental_totals[element] += (
+                            wt_pct * item.mass / total_mass
+                        )
+
+                output_df = pd.DataFrame({
+                    "Element": list(elemental_totals.keys()),
+                    "WeightPercent": list(elemental_totals.values())
+                })
+
+                output_df.sort_values("Element", inplace=True)
+
+                st.subheader("Elemental Composition")
+                st.dataframe(
+                    output_df.round(6),
+                    width="stretch"
+                )
+
+                csv_export = output_df.to_csv(index=False)
+
+                st.download_button(
+                    label="Download Element Standard CSV",
+                    data=csv_export,
+                    file_name="elemental_standard.csv",
+                    mime="text/csv",
+                )
+
+            except Exception as e:
+                st.error(f"Conversion failed: {e}")
+            
+    
     formulas = st.session_state.formula_list
 
     if st.session_state.active_tool == "Isotope Plotter":
