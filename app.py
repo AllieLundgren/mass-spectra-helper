@@ -1416,10 +1416,12 @@ elif st.session_state.active_tool == "m/z Lookup":
 
         candidates = sorted(set(candidates))
 
-    filtered_candidates = []
+    
     
     if element_filter.strip():
 
+        filtered_candidates = []
+        
         requested_elements = {
             e.strip().capitalize()
             for e in element_filter.split(",")
