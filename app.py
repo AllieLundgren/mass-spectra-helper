@@ -413,6 +413,12 @@ with st.sidebar:
             step=0.1,
             key="reverse_mz_input"
         )
+        element_filter = st.text_input(
+            "Filter by element(s)",
+            "",
+            placeholder="e.g. Fe, Ti, Si, Li",
+            help="Leave blank to search all species. Enter one or more element symbols separated by commas.",
+        )
 
         tolerance = st.number_input(
             "Tolerance (Da)",
@@ -1408,8 +1414,31 @@ elif st.session_state.active_tool == "m/z Lookup":
         for species_group in all_species.values():
             candidates.extend(species_group)
 
-        candidates = list(set(candidates))
+        candidates = sorted(set(candidates))
+    
+    if element_filter.strip():
 
+        requested_elements = {
+            e.strip().capitalize()
+            for e in element_filter.split(",")
+            if e.strip()
+        }
+
+        filtered_candidates = []
+
+        for formula in candidates:
+            try:
+                composition = Formula(formula).composition()
+
+                species_elements = set(composition.keys())
+
+                if requested_elements.intersection(species_elements):
+                    filtered_candidates.append(formula)
+
+            except Exception:
+                continue
+
+    candidates = filtered_candidates
     matches = []
 
     for form in candidates:
