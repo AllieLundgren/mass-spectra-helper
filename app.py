@@ -1415,6 +1415,8 @@ elif st.session_state.active_tool == "m/z Lookup":
             candidates.extend(species_group)
 
         candidates = sorted(set(candidates))
+
+    filtered_candidates = []
     
     if element_filter.strip():
 
@@ -1423,8 +1425,6 @@ elif st.session_state.active_tool == "m/z Lookup":
             for e in element_filter.split(",")
             if e.strip()
         }
-
-        filtered_candidates = []
 
         for formula in candidates:
             try:
