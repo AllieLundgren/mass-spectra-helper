@@ -1417,6 +1417,7 @@ elif st.session_state.active_tool == "m/z Lookup":
         candidates = sorted(set(candidates))
 
     
+    filtered_candidates = candidates.copy()
     
     if element_filter.strip():
 
